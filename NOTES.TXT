@@ -1,0 +1,57 @@
+#sudo apt-get install platformio platformio-doc stlink-tools stm32flash libstlink-dev
+#sudo pip3 install platformio
+# NOTE: requires bleeding edge for some fucking reason
+as user:
+wget https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py -O get-platformio.py
+python3 get-platformio.py
+
+
+cd releases
+cp 2.1.1 2.1.1-edf
+cd 2.1.1-edf
+
+In Configuration.h, change to:
+	#define X_BED_SIZE 210
+	#define Y_BED_SIZE 210 
+
+	#define X_MIN_POS 5 //0
+	#define Y_MIN_POS 5 //-4 // bed clips, sticker
+	#define Z_MIN_POS 0
+	#define X_MAX_POS (X_BED_SIZE - 5)
+	#define Y_MAX_POS (Y_BED_SIZE - 5)
+	#define Z_MAX_POS 200  
+
+	#define INVERT_X_DIR true
+	#define INVERT_Y_DIR false
+	#define INVERT_Z_DIR true  
+	#define X_MIN_ENDSTOP_INVERTING true  // Set to true to invert the logic of theendstop.
+	#define Y_MIN_ENDSTOP_INVERTING true  // Set to true to invert the logic of the endstop.
+	#define Z_MIN_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.  
+
+	// If you enabled Z_SAFE_HOMING, then automatically the printer homes Z at the middle of the build plate
+	#define Z_AFTER_HOMING  10  
+
+
+bash# grep MOTHERBOARD Configuration.h 
+  #define MOTHERBOARD BOARD_MKS_ROBIN_NANO
+
+
+bash# find ../.. -name 'pins.h'
+../../Marlin-2.1.1/Marlin/src/pins/pins.h
+
+bash# grep MKS_ROBIN_NANO ../../Marlin-2.1.1/Marlin/src/pins/pins.h 
+#elif MB(MKS_ROBIN_NANO)
+  #include "stm32f1/pins_MKS_ROBIN_NANO.h"      // STM32F1                                env:mks_robin_nano35 env:mks_robin_nano35_maple
+
+
+cd ../../Marlin-2.1.1
+mv Marlin/Configuration.h Marlin/Configuration.h.orig
+mv Marlin/Configuration_adv.h Marlin/Configuration_adv.h.orig
+cp ../releases/2.1.1-edf/Configuraion*.h .
+
+# make clean:
+platformio run --target clean -e mks_robin_nano
+# make:
+platformio run -e mks_robin_nano35 env
+
+cp .pio/build/mks_robin_nano35/Robin_nano35.bin ../releases/2.1.1-edf/Robin_nano.bin
